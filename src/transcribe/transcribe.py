@@ -20,6 +20,20 @@ def _is_oom(exc: Exception) -> bool:
     return "out of memory" in text or "cuda oom" in text or "cublas" in text
 
 
+def build_asr_options(settings: Settings) -> dict[str, object]:
+    """從設定組出 whisperx 的 asr_options（只含要覆寫的防幻覺旋鈕）。
+
+    抽成純函式以便單元測試；whisperx 會把此 dict 疊加在自身預設之上。
+    """
+    return {
+        "condition_on_previous_text": settings.condition_on_previous_text,
+        "no_repeat_ngram_size": settings.no_repeat_ngram_size,
+        "repetition_penalty": settings.repetition_penalty,
+        "compression_ratio_threshold": settings.compression_ratio_threshold,
+        "no_speech_threshold": settings.no_speech_threshold,
+    }
+
+
 def transcribe_audio(
     audio_path: Path,
     settings: Settings,
@@ -51,6 +65,7 @@ def transcribe_audio(
             device=settings.device,
             compute_type=settings.compute_type,
             language=settings.language or None,
+            asr_options=build_asr_options(settings),
         )
         result = model.transcribe(audio, batch_size=settings.batch_size)
         free_gpu(model)

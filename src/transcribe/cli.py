@@ -44,6 +44,13 @@ def run(
     align: bool = typer.Option(True, "--align/--no-align", help="是否做詞級對齊 (中文品質普通，可關)"),
     diarize: bool = typer.Option(True, "--diarize/--no-diarize", help="是否做講者分辨"),
     diarize_model: Optional[str] = typer.Option(None, "--diarize-model", help="pyannote 分辨模型，預設 speaker-diarization-3.1"),
+    condition_on_previous_text: Optional[bool] = typer.Option(
+        None,
+        "--condition-on-previous-text/--no-condition-on-previous-text",
+        help="以前文為解碼條件。預設關閉（抗重複幻覺）；連貫性需求高時可開",
+    ),
+    repetition_penalty: Optional[float] = typer.Option(None, "--repetition-penalty", help="重複懲罰，預設 1.1（越大越抗重複）"),
+    no_repeat_ngram_size: Optional[int] = typer.Option(None, "--no-repeat-ngram-size", help="禁止重複的 n-gram 大小，預設 3（0=停用）"),
     compute_type: Optional[str] = typer.Option(None, "--compute-type", help="float16 / int8 / float32"),
     batch_size: Optional[int] = typer.Option(None, "--batch-size", help="批次大小，VRAM 不足時調小"),
     device: Optional[str] = typer.Option(None, "--device", help="cuda / cpu"),
@@ -60,6 +67,9 @@ def run(
             device=device,
             output_dir=output_dir,
             diarize_model=diarize_model,
+            condition_on_previous_text=condition_on_previous_text,
+            repetition_penalty=repetition_penalty,
+            no_repeat_ngram_size=no_repeat_ngram_size,
         )
         options = PipelineOptions(
             align=align,

@@ -80,6 +80,9 @@ transcribe run a.mp3 -o ./outputs -f txt,srt
 | `--min-speakers` / `--max-speakers` | 講者人數範圍 |
 | `--align / --no-align` | 詞級對齊（中文品質普通，可關）|
 | `--diarize / --no-diarize` | 講者分辨開關 |
+| `--condition-on-previous-text` / `--no-...` | 以前文為解碼條件；預設關閉（抗幻覺）|
+| `--repetition-penalty` | 重複懲罰，預設 1.1 |
+| `--no-repeat-ngram-size` | 禁止重複的 n-gram 大小，預設 3 |
 | `--compute-type` | `float16`（預設）/ `int8` / `float32` |
 | `--batch-size` | 批次大小，VRAM 不足時調小 |
 | `--device` | `cuda` / `cpu` |
@@ -95,6 +98,26 @@ transcribe run a.mp3 -o ./outputs -f txt,srt
 [SPEAKER_01] 00:00:05 - 00:00:12
 好的，我先報告一下目前的進度。
 ```
+
+## 轉錄品質 / 防幻覺
+
+長段單一語者、背景雜音或靜音時，Whisper 容易產生**重複幻覺**（如 `1,2,3...50,50,50` 或同字連發）。本工具**預設已開啟**一組抗幻覺參數，通常不必手動調：
+
+| 參數 | 預設 | 作用 |
+|------|------|------|
+| `condition_on_previous_text` | `false` | 斬斷「重複自我延續」的迴圈（最關鍵）|
+| `no_repeat_ngram_size` | `3` | 解碼時禁止重複任何 3-gram |
+| `repetition_penalty` | `1.1` | 對重複 token 加懲罰 |
+| `compression_ratio_threshold` | `2.4` | 壓縮比過高（高度重複）的段直接丟棄 |
+| `no_speech_threshold` | `0.6` | 靜音機率高的段略過 |
+
+若仍有幻覺，依序嘗試：
+
+1. **加大抗重複力度**：`--repetition-penalty 1.3 --no-repeat-ngram-size 2`
+2. **前處理去雜音**：先用 UVR（Ultimate Vocal Remover）把背景音/音樂分離，只留人聲再轉錄——對吵雜會議特別有效。
+3. 若發現整體連貫性變差，可改回 `--condition-on-previous-text`（會略增重複風險）。
+
+所有參數也可在 `.env` 設定為預設值（見 `.env.example`）。
 
 ## 開發 / 測試
 
