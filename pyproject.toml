@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-transcribe"
+version = "0.1.0"
+description = "本地語音轉錄 + 講者分辨，輸出已標註講者的逐字稿 CLI 工具"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "whisperx>=3.3.0",
+    "typer>=0.12.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "rich>=13.7.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0", "pytest-cov>=5.0.0"]
+
+[project.scripts]
+transcribe = "transcribe.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
