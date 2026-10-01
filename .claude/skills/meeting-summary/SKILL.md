@@ -17,17 +17,17 @@ CLI 不做摘要；由你（agent）閱讀逐字稿後撰寫。逐字稿若還�
 2. 取得概況：
 
    ```bash
-   uv run transcribe --json transcript stats outputs/<名>.json
+   uv run transcribe --json transcript stats outputs/<名>/<名>.json
    ```
 
    記下總長、講者數、各講者占比；講者若已改名會顯示名稱。
-3. 閱讀全文：直接讀 `outputs/<名>.json`（或較精簡的 `outputs/<名>.txt`）。很長的會議分段讀，邊讀邊記主題與時間戳。需要確認某個詞出現在哪時：
+3. 閱讀全文：直接讀 `outputs/<名>/<名>.json`（或較精簡的 `outputs/<名>/<名>.txt`）。很長的會議分段讀，邊讀邊記主題與時間戳。需要確認某個詞出現在哪時：
 
    ```bash
-   uv run transcribe --json transcript search outputs/<名>.json "關鍵字" -C 2
+   uv run transcribe --json transcript search outputs/<名>/<名>.json "關鍵字" -C 2
    ```
 
-4. 寫到 `outputs/<名>_summary.md`，格式如下。
+4. 寫到 `outputs/<名>/<名>_summary.md`，格式如下。
 
 ## 輸出格式
 

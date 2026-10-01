@@ -72,9 +72,11 @@ def test_full_pipeline_writes_outputs(monkeypatch, tmp_path):
     assert result.language == "zh"
     names = {p.name for p in result.outputs}
     assert names == {"meeting.txt", "meeting.json"}
+    # 一場會議一個資料夾：<output_dir>/<stem>/<stem>.<格式>
+    assert {p.parent for p in result.outputs} == {tmp_path / "meeting"}
     for p in result.outputs:
         assert p.exists()
-    assert "SPEAKER_00" in (tmp_path / "meeting.txt").read_text(encoding="utf-8")
+    assert "SPEAKER_00" in (tmp_path / "meeting" / "meeting.txt").read_text(encoding="utf-8")
 
 
 def test_no_diarize_skips_diarization(monkeypatch, tmp_path):
@@ -89,7 +91,7 @@ def test_no_diarize_skips_diarization(monkeypatch, tmp_path):
     run_pipeline(audio_in, settings, options)
 
     assert calls["diarize"] == 0
-    txt = (tmp_path / "solo.txt").read_text(encoding="utf-8")
+    txt = (tmp_path / "solo" / "solo.txt").read_text(encoding="utf-8")
     assert "UNKNOWN" in txt  # 無分辨 → 講者標 UNKNOWN
 
 
@@ -116,7 +118,7 @@ def test_video_source_recorded_in_json(monkeypatch, tmp_path):
 
     assert res.source["kind"] == "video"
     assert res.speakers == ["SPEAKER_00", "SPEAKER_01"]
-    doc = json.loads((tmp_path / "out" / "talk.json").read_text(encoding="utf-8"))
+    doc = json.loads((tmp_path / "out" / "talk" / "talk.json").read_text(encoding="utf-8"))
     assert doc["schema_version"] == 1
     assert doc["source"]["kind"] == "video"
     assert doc["source"]["audio_track"] == 0
@@ -159,8 +161,8 @@ def test_expand_inputs_errors(tmp_path):
 def test_batch_continues_after_failure_and_skips_existing(monkeypatch, tmp_path):
     _patch_stages(monkeypatch, expect_diarize=False)
     out = tmp_path / "out"
-    out.mkdir()
-    (out / "done.json").write_text("{}", encoding="utf-8")
+    (out / "done").mkdir(parents=True)
+    (out / "done" / "done.json").write_text("{}", encoding="utf-8")
     good, bad, done = tmp_path / "good.wav", tmp_path / "bad.mp4", tmp_path / "done.wav"
     good.write_bytes(b"x")
     bad.write_bytes(b"no-audio")

@@ -23,19 +23,19 @@ uv run transcribe --json media probe <檔案>
 
 ```bash
 uv run transcribe --json media extract <影片> --track 0 --format wav
-uv run transcribe --json media extract <影片> --track 1 -o outputs/commentary.m4a
+uv run transcribe --json media extract <影片> --track 1 -o outputs/<名>/commentary.m4a
 ```
 
 - 可用格式：`wav`、`flac`、`mp3`、`m4a`；給了 `-o` 就以其副檔名決定格式。
-- 預設輸出到 `outputs/<檔名>.track<N>.<格式>`。
+- 預設輸出到該檔的會議資料夾 `outputs/<檔名>/<檔名>.track<N>.<格式>`。
 - 只是要轉逐字稿的話**不必先 extract**，`transcribe run` 會自己抽音軌（用 `--audio-track` 選軌）。
 
 ## 切出片段
 
 ```bash
 uv run transcribe --json media clip <檔案> --start 00:12:30 --end 00:13:10
-uv run transcribe --json media clip <檔案> -s 750 -e 790 -o outputs/clip.mp4 --dry-run
+uv run transcribe --json media clip <檔案> -s 750 -e 790 -o outputs/<名>/clip.mp4 --dry-run
 ```
 
 - 典型用途：使用者對逐字稿某句有疑問 → 用 transcript-query skill 找到時間戳 → 前後各留幾秒切出來給使用者回聽。
-- 預設輸出 `outputs/<檔名>_<起>-<迄><原副檔名>`；起點超過媒體長度會回 `INVALID_ARGUMENT`。
+- 預設輸出 `outputs/<檔名>/<檔名>_<起>-<迄><原副檔名>`；起點超過媒體長度會回 `INVALID_ARGUMENT`。

@@ -65,7 +65,7 @@ def fake_pipeline(monkeypatch, fake_media):
         if input_path.read_bytes() == b"oom":
             raise GPUOutOfMemoryError("CUDA out of memory", hint="降載", retry_args=["--compute-type", "int8"])
         media_mod.require_audio_track(media_mod.probe(input_path), options.audio_track)
-        out = settings.output_dir / f"{input_path.stem}.json"
+        out = pipeline_mod.output_base(input_path, settings).with_suffix(".json")
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text("{}", encoding="utf-8")
         return PipelineResult(
@@ -171,6 +171,7 @@ def test_dry_run_does_not_transcribe(capsys, tmp_path, monkeypatch, fake_media):
     files = {Path(f["input"]).name: f for f in payload["data"]["files"]}
     assert files["a.mp4"]["status"] == "ready"
     assert [Path(p).name for p in files["a.mp4"]["outputs"]] == ["a.txt", "a.vtt"]
+    assert {Path(p).parent.name for p in files["a.mp4"]["outputs"]} == {"a"}
     assert files["m.mp4"]["error"]["code"] == "NO_AUDIO_STREAM"
     assert set(payload["data"]["settings"]) >= {"hf_token_set"}
     assert "hf_token" not in payload["data"]["settings"]  # 只回報有沒有設，不回傳金鑰本身
@@ -261,3 +262,12 @@ def test_third_party_stdout_noise_does_not_break_envelope(capsys, tmp_path, monk
     assert code == 5 and json.loads(captured.out)["error"]["code"] == "GPU_OOM"
     assert "voice activity" in captured.err and "raw print noise" in captured.err
     assert sys.stdout is stdout_before  # entry 結束後已還原
+
+
+def test_media_defaults_go_into_meeting_folder(capsys, tmp_path, monkeypatch, fake_media):
+    monkeypatch.setenv("OUTPUT_DIR", str(tmp_path / "outs"))
+    f = tmp_path / "會議.mp4"
+    f.write_bytes(b"x")
+    code, payload = call(capsys, "media", "clip", str(f), "-s", "1", "-e", "2", "--dry-run")
+    assert code == 0
+    assert Path(payload["data"]["output"]) == tmp_path / "outs" / "會議" / "會議_000001-000002.mp4"

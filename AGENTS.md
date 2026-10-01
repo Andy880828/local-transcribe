@@ -34,6 +34,8 @@ uv pip install -e .                    # 改了 pyproject 的 entry point 或依
   任何新的輸出都走 `emit()` / `fail()`，不要直接 `print` 或 `typer.echo` 到 stdout。
 - 錯誤碼、exit code、`action` **只定義在 `errors.py` 的例外類別屬性**。新增失敗情境＝新增例外類別，
   不要在 CLI 手寫 code 字串或數字。`action` 依「使用者現在該做什麼」分類，不是依內部原因。
+- 輸出位置只由 `pipeline.meeting_dir()`／`output_base()` 決定（一場會議一個資料夾 `outputs/<stem>/`）。
+  新增會產生檔案的指令時，預設路徑也要經過 `meeting_dir()`，不要自己拼 `output_dir / ...`。
 - 輸出格式的允許值只有 `formats.RENDERERS`；影音副檔名只有 `media.MEDIA_EXTENSIONS`；
   抽音軌格式只有 `media.AUDIO_EXPORT_CODECS`。不要在別處再列一份。
 - 逐字稿文字一律經 `formats.clean_text()`；回傳逐字稿文字的結果要 `emit(..., untrusted=True)`。

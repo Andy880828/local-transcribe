@@ -71,9 +71,18 @@ def expand_inputs(inputs: list[Path]) -> list[Path]:
     return list(dict.fromkeys(files))
 
 
-def output_base(input_path: Path, settings: Settings) -> Path:
-    """輸出檔的共同前綴：``<output_dir>/<輸入檔名去副檔名>``。"""
+def meeting_dir(input_path: Path, settings: Settings) -> Path:
+    """一個輸入檔（一場會議）的專屬輸出資料夾：``<output_dir>/<stem>/``。
+
+    輸出位置的唯一決定點：逐字稿、抽出的音軌、切出的片段、agent 寫的摘要都放這裡，
+    讓同一場會議的產物聚在一起。
+    """
     return settings.output_dir / input_path.stem
+
+
+def output_base(input_path: Path, settings: Settings) -> Path:
+    """逐字稿檔的共同前綴：``<output_dir>/<stem>/<stem>``（後面接 ``.txt`` 等副檔名）。"""
+    return meeting_dir(input_path, settings) / input_path.stem
 
 
 def run_pipeline(
@@ -160,7 +169,7 @@ def run_batch(
 ) -> list[dict[str, Any]]:
     """逐檔執行，回傳每檔的狀態紀錄（ok / skipped / error），不因單檔失敗中斷。
 
-    ``skip_existing``：``<output_dir>/<stem>.json`` 已存在就跳過。
+    ``skip_existing``：``<output_dir>/<stem>/<stem>.json`` 已存在就跳過。
     同名（stem 相同）的不同檔案會互相覆蓋輸出，因此直接報錯而非默默覆蓋。
     """
     if options.diarize:

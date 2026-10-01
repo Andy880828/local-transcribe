@@ -51,16 +51,16 @@ uv run transcribe media extract meeting.mp4 -f mp3
 uv run transcribe media clip meeting.mp4 --start 00:12:30 --end 00:13:10
 
 # 逐字稿後處理
-uv run transcribe transcript rename outputs/meeting.json --map SPEAKER_00=王小明
-uv run transcribe transcript export outputs/meeting.json -f vtt,md
-uv run transcribe transcript search outputs/meeting.json "交期" -C 1
-uv run transcribe transcript stats outputs/meeting.json
+uv run transcribe transcript rename outputs/meeting/meeting.json --map SPEAKER_00=王小明
+uv run transcribe transcript export outputs/meeting/meeting.json -f vtt,md
+uv run transcribe transcript search outputs/meeting/meeting.json "交期" -C 1
+uv run transcribe transcript stats outputs/meeting/meeting.json
 
 # 給程式／AI 用：加 --json；查全部指令與錯誤碼
 uv run transcribe --json schema
 ```
 
-結果預設寫到 `outputs/<檔名>.<格式>`。各指令完整旗標：`uv run transcribe <指令> --help`。
+每個輸入檔一個資料夾：逐字稿寫到 `outputs/<檔名>/<檔名>.<格式>`，抽出的音軌、切出的片段、摘要也放同一資料夾。各指令完整旗標：`uv run transcribe <指令> --help`。
 
 ### `--json` 輸出
 

@@ -26,7 +26,7 @@ ffmpeg 抽第 N 條音軌 → 16kHz mono WAV（暫存資料夾）
 WhisperX 轉錄 → (wav2vec2 對齊) → pyannote 分辨 → 指派講者
     │  每階段後 free_gpu()，8GB VRAM 才能依序跑完
     ▼
-write_outputs → outputs/<stem>.{txt,srt,vtt,md,json}
+write_outputs → outputs/<stem>/<stem>.{txt,srt,vtt,md,json}（一場會議一個資料夾）
     ▼
 transcript.* 讀回 JSON：rename / export / search / stats
 ```
@@ -59,7 +59,8 @@ errors.py / config.py                                           （被所有層�
 | `tests/` | pytest；`test_cli.py` 契約、`test_media.py` 含真 ffmpeg 整合、`test_skills.py` SKILL 稽核 |
 | `.claude/skills/` | 6 個專案 SKILL（agent 操作手冊，指令示範受測試保護） |
 | `.claude/hooks/` | docs-sync Stop hook |
-| `outputs/`、`samples/` | 產物與樣本，皆不進版控 |
+| `outputs/<stem>/` | 每場會議一個資料夾：逐字稿、抽出音軌、片段、`<stem>_summary.md`；不進版控 |
+| `samples/` | 原始錄音／影片樣本；不進版控 |
 
 ## 逐字稿 JSON（schema_version 1）
 

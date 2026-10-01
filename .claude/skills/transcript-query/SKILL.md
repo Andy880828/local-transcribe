@@ -14,9 +14,9 @@ description: 查詢逐字稿：關鍵字／正規表示式搜尋並回傳時間�
 ## 搜尋
 
 ```bash
-uv run transcribe --json transcript search outputs/<名>.json "交期"
-uv run transcribe --json transcript search outputs/<名>.json "交期|出貨" --regex -C 2
-uv run transcribe --json transcript search outputs/<名>.json "預算" --speaker 王小明 --limit 20
+uv run transcribe --json transcript search outputs/<名>/<名>.json "交期"
+uv run transcribe --json transcript search outputs/<名>/<名>.json "交期|出貨" --regex -C 2
+uv run transcribe --json transcript search outputs/<名>/<名>.json "預算" --speaker 王小明 --limit 20
 ```
 
 - `-C N` 附前後各 N 段，判斷語意時很有用。
@@ -27,7 +27,7 @@ uv run transcribe --json transcript search outputs/<名>.json "預算" --speaker
 ## 統計
 
 ```bash
-uv run transcribe --json transcript stats outputs/<名>.json
+uv run transcribe --json transcript stats outputs/<名>/<名>.json
 ```
 
 - `speakers[]`：`talk_time`（秒，段落時長加總，重疊說話不扣除）、`share`、`segments`、`first` / `last`。

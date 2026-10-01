@@ -35,6 +35,7 @@ from . import errors as errors_mod
 from .config import Settings, load_settings
 from .errors import InvalidArgumentError, PartialFailureError, TranscribeError
 from .formats import DEFAULT_FORMATS, RENDERERS, format_timestamp, parse_formats
+from .pipeline import meeting_dir
 
 app = typer.Typer(
     add_completion=False,
@@ -118,11 +119,6 @@ def handled(command: str) -> Callable[[Callable[..., None]], Callable[..., None]
     return decorator
 
 
-def _echo_kv(data: dict[str, Any]) -> None:
-    for key, value in data.items():
-        typer.echo(f"{key}: {value}")
-
-
 # ---------------------------------------------------------------- 根指令
 
 
@@ -177,9 +173,11 @@ def run(
     compute_type: Optional[str] = typer.Option(None, "--compute-type", help="float16 / int8 / float32"),
     batch_size: Optional[int] = typer.Option(None, "--batch-size", help="批次大小，VRAM 不足時調小"),
     device: Optional[str] = typer.Option(None, "--device", help="cuda / cpu"),
-    output_dir: Optional[Path] = typer.Option(None, "--output-dir", "-o", help="輸出資料夾，預設 outputs/"),
+    output_dir: Optional[Path] = typer.Option(
+        None, "--output-dir", "-o", help="輸出根資料夾，預設 outputs/；每個輸入檔各自輸出到 <根>/<檔名>/"
+    ),
     formats: str = typer.Option(",".join(DEFAULT_FORMATS), "--format", "-f", help=FORMATS_HELP),
-    skip_existing: bool = typer.Option(False, "--skip-existing", help="輸出資料夾已有同名 .json 就跳過（批次續跑用）"),
+    skip_existing: bool = typer.Option(False, "--skip-existing", help="已有 <根>/<檔名>/<檔名>.json 就跳過（批次續跑用）"),
     dry_run: bool = typer.Option(False, "--dry-run", help="只檢查輸入（含 ffprobe 音軌）與預計輸出，不轉錄"),
 ) -> None:
     """影片／音檔 → 時間序、標註講者的逐字稿（支援多檔與資料夾批次）。"""
@@ -400,7 +398,7 @@ def media_extract(
         "wav", "--format", "-f", help="輸出音訊格式：wav / flac / mp3 / m4a（給 -o 時以其副檔名為準）"
     ),
     out: Optional[Path] = typer.Option(
-        None, "--out", "-o", help="輸出檔路徑，預設 <output_dir>/<檔名>.track<N>.<格式>"
+        None, "--out", "-o", help="輸出檔路徑，預設 <output_dir>/<檔名>/<檔名>.track<N>.<格式>"
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="只檢查音軌與預計輸出路徑"),
 ) -> None:
@@ -412,7 +410,7 @@ def media_extract(
             raise InvalidArgumentError(
                 f"unsupported audio format: {fmt}", hint=f"可用格式：{', '.join(AUDIO_EXPORT_CODECS)}"
             )
-        out = _settings().output_dir / f"{file.stem}.track{track}.{fmt.lower()}"
+        out = meeting_dir(file, _settings()) / f"{file.stem}.track{track}.{fmt.lower()}"
     info = probe(file)
     selected = require_audio_track(info, track)
     data: dict[str, Any] = {"input": str(file), "track": selected, "output": str(out), "dry_run": dry_run}
@@ -432,7 +430,7 @@ def media_clip(
     start: str = typer.Option(..., "--start", "-s", help="起點：秒數或 HH:MM:SS(.mmm)"),
     end: str = typer.Option(..., "--end", "-e", help="終點：秒數或 HH:MM:SS(.mmm)"),
     out: Optional[Path] = typer.Option(
-        None, "--out", "-o", help="輸出檔路徑，預設 <output_dir>/<檔名>_<起>-<迄><原副檔名>"
+        None, "--out", "-o", help="輸出檔路徑，預設 <output_dir>/<檔名>/<檔名>_<起>-<迄><原副檔名>"
     ),
     dry_run: bool = typer.Option(False, "--dry-run", help="只解析時間與預計輸出路徑"),
 ) -> None:
@@ -452,7 +450,7 @@ def media_clip(
         )
     if out is None:
         tag = f"{format_timestamp(start_s).replace(':', '')}-{format_timestamp(end_s).replace(':', '')}"
-        out = _settings().output_dir / f"{file.stem}_{tag}{file.suffix}"
+        out = meeting_dir(file, _settings()) / f"{file.stem}_{tag}{file.suffix}"
     data = {"input": str(file), "start": start_s, "end": end_s, "output": str(out), "dry_run": dry_run}
     if not dry_run:
         clip(file, out, start_s, end_s)

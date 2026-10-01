@@ -25,7 +25,7 @@ description: 批次轉錄整個資料夾（或多個檔案）的影片與錄音�
    uv run transcribe --json run <資料夾> --skip-existing --max-speakers 6
    ```
 
-   - `--skip-existing`：`outputs/<檔名>.json` 已存在就跳過，讓中斷後可以續跑。
+   - `--skip-existing`：`outputs/<檔名>/<檔名>.json` 已存在就跳過，讓中斷後可以續跑。
    - 各檔講者數不同時用 `--min-speakers` / `--max-speakers`，不要用固定的 `--speakers`。
 3. 解讀結果：
    - 全部成功：`ok: true`，exit 0。

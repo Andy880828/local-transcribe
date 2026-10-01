@@ -8,7 +8,7 @@
 ## §0 接手速覽
 
 - **交接狀態**：agent-native CLI 重構完成並已實測（影片 → 多講者逐字稿、媒體工具、逐字稿後處理、批次、6 個 SKILL）。沒有進行中的工作。
-- **驗證基準**：`uv run pytest -q` → **86 passed**（重構前 18）；`uvx ruff check src tests` → **0**；`uvx ruff format --check` → 全部已格式化。
+- **驗證基準**：`uv run pytest -q` → **87 passed**（重構前 18）；`uvx ruff check src tests` → **0**；`uvx ruff format --check` → 全部已格式化。
 - **下一步**：
   1. 用真實會議影片跑一次 `meeting-summary` SKILL 全流程，確認 SKILL 指引足夠。
   2. 視需求從 ROADMAP「可能的方向」挑下一項。
@@ -27,7 +27,9 @@
 - 真 GPU 批次：資料夾含正常影片、無音軌影片、壞檔、.txt → exit 10，1 ok / 2 error（`NO_AUDIO_STREAM`、`MEDIA_ERROR`），.txt 被略過；`--skip-existing` 重跑 → 1 skipped。
 - 真實產物上跑 stats / search / rename / export vtt,md / media clip / media extract mp3：輸出內容逐一檢查。
 - 錯誤路徑實測：無音軌（exit 3）、音軌超出範圍（exit 3）、`HF_TOKEN=` 空（exit 4，轉錄前即失敗）、未知格式（exit 2）、缺參數／未知旗標（exit 2，仍為 envelope）。
-- 舊版逐字稿 `outputs/0727_IE.json`（v0）可直接 `transcript stats`。
+- 舊版逐字稿 `outputs/0727_IE/0727_IE.json`（v0）可直接 `transcript stats`。
+
+- 輸出結構改為一場會議一個資料夾（`outputs/<stem>/`）：既有兩場會議已搬入，`transcript stats`、`run --dry-run`、`media clip --dry-run`、`--skip-existing` 皆在真實檔案上確認讀寫新位置。
 
 ## 已知未覆蓋
 
