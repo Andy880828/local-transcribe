@@ -25,6 +25,7 @@
 ## 核心功能
 
 - **轉錄**：影片／音檔 → txt / srt / vtt / md / json；支援多音軌選軌、多檔與資料夾批次、續跑。
+- **中文輸出一律台灣繁體**：Whisper 會混出簡體段落，輸出前自動轉換（不改用詞），JSON 記錄實際套用的轉換。
 - **多人聲辨識**：pyannote 講者分辨，可給確切人數或範圍；講者可改名（可逆）。
 - **媒體工具**：看音軌（probe）、從影片抽音軌（extract）、依時間切片段（clip）。
 - **逐字稿查詢**：關鍵字／正規表示式搜尋（附時間戳與前後文）、各講者發言統計。
@@ -48,5 +49,6 @@
 | 影片轉逐字稿 | `uv run transcribe --json run <影片> --speakers N` 成功，JSON `source.kind == "video"`，segments 依時間排序且有多個講者標籤 |
 | 輸出契約 | 任何指令加 `--json` 時 stdout 可被 `json.loads` 一次解析（含第三方套件輸出 log 時） |
 | 錯誤可行動 | 每個失敗都有 `error.code`、`action`、中文 `hint`；exit code 與 `errors.py` 一致 |
+| 繁體輸出 | 中文逐字稿不含簡體段落；JSON `text_conversion == "s2tw"`；原本就是繁體的字詞（吃、才、設備、數據、台郡）不被改動 |
 | 批次 | 單檔失敗不中斷，exit 10，逐檔列狀態；`--skip-existing` 只重跑缺的 |
 | SKILL 不漂移 | `tests/test_skills.py` 全綠：SKILL 中每條指令與旗標都存在、每個指令都有 SKILL 示範 |
