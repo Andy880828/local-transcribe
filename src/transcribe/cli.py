@@ -177,7 +177,9 @@ def run(
         None, "--output-dir", "-o", help="輸出根資料夾，預設 outputs/；每個輸入檔各自輸出到 <根>/<檔名>/"
     ),
     formats: str = typer.Option(",".join(DEFAULT_FORMATS), "--format", "-f", help=FORMATS_HELP),
-    skip_existing: bool = typer.Option(False, "--skip-existing", help="已有 <根>/<檔名>/<檔名>.json 就跳過（批次續跑用）"),
+    skip_existing: bool = typer.Option(
+        False, "--skip-existing", help="已有 <根>/<檔名>/<檔名>.json 就跳過（批次續跑用）"
+    ),
     dry_run: bool = typer.Option(False, "--dry-run", help="只檢查輸入（含 ffprobe 音軌）與預計輸出，不轉錄"),
 ) -> None:
     """影片／音檔 → 時間序、標註講者的逐字稿（支援多檔與資料夾批次）。"""
