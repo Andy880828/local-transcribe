@@ -67,6 +67,7 @@ def load_transcript(path: Path) -> dict[str, Any]:
         "schema_version": TRANSCRIPT_SCHEMA_VERSION,
         "language": raw.get("language"),
         "source": raw.get("source"),
+        "text_conversion": raw.get("text_conversion"),
         "speaker_names": dict(raw.get("speaker_names") or {}),
         "segments": segments,
     }

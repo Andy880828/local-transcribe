@@ -184,3 +184,29 @@ def test_batch_rejects_stem_collision(tmp_path):
     a, b = tmp_path / "x.mp4", tmp_path / "x.wav"
     with pytest.raises(InvalidArgumentError):
         run_batch([a, b], load_settings(output_dir=tmp_path), PipelineOptions(diarize=False))
+
+
+def test_simplified_output_converted_and_recorded(monkeypatch, tmp_path):
+    _patch_stages(monkeypatch, expect_diarize=False)
+    monkeypatch.setattr(
+        transcribe_mod,
+        "transcribe_audio",
+        lambda *a, **k: {"language": "zh", "segments": [{"start": 0.0, "end": 1.0, "text": "生日快乐"}]},
+    )
+    audio_in = tmp_path / "x.wav"
+    audio_in.write_bytes(b"x")
+
+    res = run_pipeline(audio_in, load_settings(output_dir=tmp_path), PipelineOptions(diarize=False, formats=["json"]))
+
+    doc = json.loads((tmp_path / "x" / "x.json").read_text(encoding="utf-8"))
+    assert doc["segments"][0]["text"] == "生日快樂"
+    assert doc["text_conversion"] == "s2tw"  # 有轉換就留紀錄，不是無聲改寫
+    assert res.result["text_conversion"] == "s2tw"
+
+    res = run_pipeline(
+        audio_in,
+        load_settings(output_dir=tmp_path, chinese_convert="none"),
+        PipelineOptions(diarize=False, formats=["json"]),
+    )
+    doc = json.loads((tmp_path / "x" / "x.json").read_text(encoding="utf-8"))
+    assert doc["segments"][0]["text"] == "生日快乐" and doc["text_conversion"] is None

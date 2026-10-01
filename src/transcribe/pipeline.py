@@ -139,6 +139,8 @@ def run_pipeline(
                 max_speakers=options.max_speakers,
             )
 
+    # 簡轉繁放在對齊與分辨之後：zh 對齊模型的字表是簡體，提早轉換會降低對齊品質
+    result["text_conversion"] = transcribe.to_traditional(result, settings.chinese_convert)
     result["source"] = source
     report("正在寫出逐字稿…")
     outputs = write_outputs(result, output_base(input_path, settings), options.formats)
@@ -161,6 +163,7 @@ def ok_record(input_path: Path, res: PipelineResult) -> dict[str, Any]:
         "source": res.source,
         "speakers": res.speakers,
         "segment_count": len(res.result.get("segments", [])),
+        "text_conversion": res.result.get("text_conversion"),
         "outputs": [str(p) for p in res.outputs],
     }
 

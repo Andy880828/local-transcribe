@@ -173,6 +173,9 @@ def run(
     compute_type: Optional[str] = typer.Option(None, "--compute-type", help="float16 / int8 / float32"),
     batch_size: Optional[int] = typer.Option(None, "--batch-size", help="批次大小，VRAM 不足時調小"),
     device: Optional[str] = typer.Option(None, "--device", help="cuda / cpu"),
+    chinese_convert: Optional[str] = typer.Option(
+        None, "--chinese-convert", help="中文簡轉繁：s2tw（預設，台灣繁體）/ none（保留 Whisper 原始輸出）"
+    ),
     output_dir: Optional[Path] = typer.Option(
         None, "--output-dir", "-o", help="輸出根資料夾，預設 outputs/；每個輸入檔各自輸出到 <根>/<檔名>/"
     ),
@@ -205,6 +208,7 @@ def run(
         condition_on_previous_text=condition_on_previous_text,
         repetition_penalty=repetition_penalty,
         no_repeat_ngram_size=no_repeat_ngram_size,
+        chinese_convert=chinese_convert,
     )
     options = PipelineOptions(
         align=align,
@@ -250,6 +254,7 @@ def run(
                 "diarize": diarize,
                 "diarize_model": settings.diarize_model if diarize else None,
                 "hf_token_set": bool(settings.hf_token.strip()),
+                "chinese_convert": settings.chinese_convert,
                 "output_dir": str(settings.output_dir),
             },
         }

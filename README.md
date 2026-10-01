@@ -83,6 +83,7 @@ stdout 只有這一個 JSON，進度在 stderr。`action` 告訴呼叫端下一�
 | `CUDA_UNAVAILABLE` | 重裝 CUDA 版 torch（見安裝）；或 `--device cpu` |
 | 下載模型時 `WinError 1314` | Windows 無法建立 symlink：開啟「開發人員模式」或在一般終端機執行 |
 | 重複幻覺（同字連發） | `--repetition-penalty 1.3 --no-repeat-ngram-size 2`；吵雜錄音先用 UVR 去背景音 |
+| 輸出出現簡體 | 預設會自動轉台灣繁體；若 JSON 的 `text_conversion` 是 `null`，表示該檔是 `--chinese-convert none` 或非中文 |
 | 中文講者邊界漂移 | 加 `--no-align` 試試 |
 
 ## 開發

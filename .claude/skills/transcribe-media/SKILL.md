@@ -34,6 +34,7 @@ description: 把影片或音檔轉成「有時間序、標註講者」的逐字�
    - 多音軌影片：`uv run transcribe --json run <影片> --audio-track 1`
    - 單人錄音或沒有 HF_TOKEN：`uv run transcribe --json run <檔案> --no-diarize`（講者全標 `UNKNOWN`）
    - 指定格式與位置：`uv run transcribe --json run <檔案> -f txt,srt,vtt,md,json -o outputs`
+   - 中文輸出預設自動簡轉繁（OpenCC s2tw，JSON 的 `text_conversion` 會記錄）；要保留 Whisper 原始輸出：`uv run transcribe --json run <檔案> --chinese-convert none`
    - 只想確認會發生什麼：`uv run transcribe --json run <檔案> --dry-run`
 4. 成功後回報 `data.files[0]` 的 `outputs`、`speakers`（偵測到幾位）、`language`、`source.kind`。
    講者標籤是 `SPEAKER_00` 這類代號；使用者若知道誰是誰，接著用 transcript-edit skill 改名。

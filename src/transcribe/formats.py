@@ -127,6 +127,7 @@ def to_json(result: dict[str, Any]) -> str:
         "schema_version": TRANSCRIPT_SCHEMA_VERSION,
         "language": result.get("language"),
         "source": result.get("source"),
+        "text_conversion": result.get("text_conversion"),
         "speaker_names": result.get("speaker_names") or {},
         "segments": [
             {

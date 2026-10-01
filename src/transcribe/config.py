@@ -10,11 +10,12 @@ HF token 採「延遲驗證」：載入時允許為空，真正需要講者分�
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .errors import MissingCredentialError
+from .errors import InvalidArgumentError, MissingCredentialError
 
 
 class Settings(BaseSettings):
@@ -54,6 +55,10 @@ class Settings(BaseSettings):
     # 無語音機率門檻：超過視為靜音而略過（預設 0.6）
     no_speech_threshold: float = Field(default=0.6, alias="NO_SPEECH_THRESHOLD")
 
+    # 中文簡轉繁（只在偵測語言為 zh* 時套用；none=保留 Whisper 原始輸出）。
+    # 為什麼是 s2tw 而不是 s2t / s2twp，見 transcribe.to_traditional 的 docstring。
+    chinese_convert: Literal["s2tw", "none"] = Field(default="s2tw", alias="CHINESE_CONVERT")
+
     # 輸出
     output_dir: Path = Field(default=Path("outputs"), alias="OUTPUT_DIR")
 
@@ -75,4 +80,11 @@ class Settings(BaseSettings):
 def load_settings(**overrides: object) -> Settings:
     """載入設定，允許以 CLI 旗標覆寫（None 值會被忽略，沿用預設）。"""
     clean = {k: v for k, v in overrides.items() if v is not None}
-    return Settings(**clean)
+    try:
+        return Settings(**clean)
+    except ValidationError as exc:
+        # 旗標或 .env 值不合法（例：--chinese-convert foo、BATCH_SIZE=abc）屬於使用者輸入錯誤，不是內部錯誤
+        problems = "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg']}" for e in exc.errors())
+        raise InvalidArgumentError(
+            f"invalid setting: {problems}", hint=f"設定值不合法（CLI 旗標或 .env）：{problems}"
+        ) from exc

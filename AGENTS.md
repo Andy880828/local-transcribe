@@ -42,6 +42,8 @@ uv pip install -e .                    # 改了 pyproject 的 entry point 或依
   人類模式輸出逐字稿用純 `typer.echo`，**不要用 rich**（`[SPEAKER_00]`、`[red]` 會被當 markup 吃掉）。
 - 改了指令或旗標 → 同步改 `.claude/skills/*/SKILL.md`。`tests/test_skills.py` 會檢查 SKILL 裡每條
   `uv run transcribe --json ...` 的子指令與旗標存在，且每個 CLI 指令至少被一份 SKILL 示範。
+- 中文簡轉繁只在 `transcribe.to_traditional()` 做，且必須在對齊與分辨**之後**（zh 對齊模型字表是簡體）。
+  轉換器固定 OpenCC `s2tw`：`s2t` 會改正確繁體字（吃→喫）、`s2twp` 會改用詞（設備→裝置），量測依據在該函式 docstring。
 - 取不到的值回 `null`，不湊 `0`（例：`media probe` 的 `duration`、`transcript stats` 的 `duration_source`）。
 
 ## 踩過的坑

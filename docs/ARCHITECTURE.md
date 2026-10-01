@@ -23,7 +23,7 @@
     ▼
 ffmpeg 抽第 N 條音軌 → 16kHz mono WAV（暫存資料夾）
     ▼
-WhisperX 轉錄 → (wav2vec2 對齊) → pyannote 分辨 → 指派講者
+WhisperX 轉錄 → (wav2vec2 對齊) → pyannote 分辨 → 指派講者 → OpenCC s2tw 簡轉繁（zh 才做）
     │  每階段後 free_gpu()，8GB VRAM 才能依序跑完
     ▼
 write_outputs → outputs/<stem>/<stem>.{txt,srt,vtt,md,json}（一場會議一個資料夾）
@@ -66,6 +66,7 @@ errors.py / config.py                                           （被所有層�
 
 - `segments[]`：`speaker`（**永遠是原始標籤**，如 `SPEAKER_00`）、`start` / `end`（秒，float）、`text`（已淨化）。
 - `speaker_names`：原始標籤 → 顯示名稱。改名只動這裡，所以可逆；渲染時才套用。
+- `text_conversion`：實際套用的簡轉繁（`s2tw` 或 `null`＝沒轉）。
 - `source`：`kind`（video/audio）、`duration`（秒或 null）、`audio_track`、`audio_track_count`。
 - 無 `schema_version` 的舊檔視為 v0，`transcript.load_transcript` 讀入時補齊。版本號大於工具支援時拒絕。
 
@@ -91,6 +92,7 @@ errors.py / config.py                                           （被所有層�
 | 批次 | `run` 接受多檔與資料夾，不另開 `batch` 指令 | 另開指令要重複宣告 15 個轉錄旗標，必然漂移 |
 | 改名 | 寫 `speaker_names` 對照表 | 直接改 segments 標籤不可逆，且再次改名時會把錯名字當原始標籤 |
 | 媒體工具 | subprocess 呼叫 ffmpeg | Python 綁定（如 PyAV）多一個依賴且錯誤訊息被包掉；ffmpeg stderr 原文直接放進 error.message |
+| 簡轉繁 | OpenCC `s2tw`，保留原文的「台」 | 以 15 支實際逐字稿量測：`s2t` 把正確繁體改成異體字（吃→喫、才→纔），`s2twp` 改寫用詞（設備→裝置、數據→資料）；不轉則同一支影片繁簡混雜 |
 | SKILL 正確性 | 測試解析 SKILL 指令並對 CLI 樹驗證 | 只靠文件約定，改旗標時一定會漏改 SKILL |
 
 ## 貫穿全系統的原則
