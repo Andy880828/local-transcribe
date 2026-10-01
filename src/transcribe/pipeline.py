@@ -85,6 +85,12 @@ def output_base(input_path: Path, settings: Settings) -> Path:
     return meeting_dir(input_path, settings) / input_path.stem
 
 
+def existing_transcript(input_path: Path, settings: Settings) -> Path | None:
+    """``--skip-existing`` 的判斷依據（唯一決定點，正式執行與 dry-run 共用）：已有逐字稿 JSON 就回傳其路徑。"""
+    path = output_base(input_path, settings).with_name(f"{input_path.stem}.json")
+    return path if path.exists() else None
+
+
 def run_pipeline(
     input_path: Path,
     settings: Settings,
@@ -188,8 +194,8 @@ def run_batch(
     for i, f in enumerate(files, start=1):
         if progress and len(files) > 1:
             progress(f"({i}/{len(files)}) {f.name}")
-        existing = output_base(f, settings).with_name(f"{f.stem}.json")
-        if skip_existing and existing.exists():
+        existing = existing_transcript(f, settings) if skip_existing else None
+        if existing:
             records.append({"input": str(f), "status": "skipped", "reason": "output_exists", "json": str(existing)})
             continue
         try:

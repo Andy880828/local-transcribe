@@ -8,7 +8,7 @@
 ## §0 接手速覽
 
 - **交接狀態**：agent-native CLI 重構完成並已實測（影片 → 多講者逐字稿、媒體工具、逐字稿後處理、批次、6 個 SKILL）。沒有進行中的工作。
-- **驗證基準**：`uv run pytest -q` → **87 passed**（重構前 18）；`uvx ruff check src tests` → **0**；`uvx ruff format --check` → 全部已格式化。
+- **驗證基準**：`uv run pytest -q` → **88 passed**（重構前 18）；`uvx ruff check src tests` → **0**；`uvx ruff format --check` → 全部已格式化。
 - **下一步**：
   1. 用真實會議影片跑一次 `meeting-summary` SKILL 全流程，確認 SKILL 指引足夠。
   2. 視需求從 ROADMAP「可能的方向」挑下一項。

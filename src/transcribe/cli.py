@@ -184,7 +184,15 @@ def run(
 ) -> None:
     """影片／音檔 → 時間序、標註講者的逐字稿（支援多檔與資料夾批次）。"""
     from . import media
-    from .pipeline import PipelineOptions, expand_inputs, ok_record, output_base, run_batch, run_pipeline
+    from .pipeline import (
+        PipelineOptions,
+        existing_transcript,
+        expand_inputs,
+        ok_record,
+        output_base,
+        run_batch,
+        run_pipeline,
+    )
 
     settings = _settings(
         language=language,
@@ -216,6 +224,11 @@ def run(
                 "input": str(f),
                 "outputs": [str(output_base(f, settings).with_name(f"{f.stem}.{fmt}")) for fmt in options.formats],
             }
+            existing = existing_transcript(f, settings) if skip_existing else None
+            if existing:
+                entry.update(status="skipped", reason="output_exists", json=str(existing))
+                planned.append(entry)
+                continue
             try:
                 info = media.probe(f)
                 media.require_audio_track(info, audio_track)

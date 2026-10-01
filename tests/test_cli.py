@@ -271,3 +271,22 @@ def test_media_defaults_go_into_meeting_folder(capsys, tmp_path, monkeypatch, fa
     code, payload = call(capsys, "media", "clip", str(f), "-s", "1", "-e", "2", "--dry-run")
     assert code == 0
     assert Path(payload["data"]["output"]) == tmp_path / "outs" / "會議" / "會議_000001-000002.mp4"
+
+
+def test_dry_run_honors_skip_existing(capsys, tmp_path, monkeypatch, fake_media):
+    """曾發生：--dry-run 沒套 --skip-existing，已完成的檔顯示 ready，與正式執行不一致。"""
+    monkeypatch.setattr(pipeline_mod, "run_pipeline", lambda *a, **k: pytest.fail("dry-run 不應執行轉錄"))
+    d = tmp_path / "in"
+    d.mkdir()
+    (d / "done.mp4").write_bytes(b"x")
+    (d / "todo.mp4").write_bytes(b"x")
+    out = tmp_path / "out"
+    (out / "done").mkdir(parents=True)
+    (out / "done" / "done.json").write_text("{}", encoding="utf-8")
+
+    code, payload = call(capsys, "run", str(d), "-o", str(out), "--dry-run", "--skip-existing")
+    status = {Path(f["input"]).name: f["status"] for f in payload["data"]["files"]}
+    assert code == 0 and status == {"done.mp4": "skipped", "todo.mp4": "ready"}
+
+    code, payload = call(capsys, "run", str(d), "-o", str(out), "--dry-run")  # 沒加旗標就照常 ready
+    assert {f["status"] for f in payload["data"]["files"]} == {"ready"}
