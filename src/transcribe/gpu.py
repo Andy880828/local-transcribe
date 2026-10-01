@@ -17,18 +17,18 @@ def ensure_cuda(device: str) -> None:
     """
     if not device.startswith("cuda"):
         return
-    from .errors import TranscribeError
+    from .errors import CudaUnavailableError, ToolMissingError
 
     try:
         import torch
     except ImportError as exc:  # pragma: no cover
-        raise TranscribeError(
+        raise ToolMissingError(
             "torch is not installed",
             hint="尚未安裝 torch，請依 README 安裝相依。",
         ) from exc
 
     if not torch.cuda.is_available():
-        raise TranscribeError(
+        raise CudaUnavailableError(
             f"CUDA not available (torch={torch.__version__})",
             hint=(
                 "torch 偵測不到 CUDA。多半是裝到 CPU 版 torch。請重裝 CUDA 版："

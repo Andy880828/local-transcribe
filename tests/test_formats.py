@@ -4,12 +4,21 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
+from transcribe.errors import InvalidArgumentError
 from transcribe.formats import (
+    RENDERERS,
+    clean_text,
     format_timestamp,
     merge_by_speaker,
+    parse_formats,
     to_json,
+    to_md,
     to_srt,
     to_txt,
+    to_vtt,
+    write_outputs,
 )
 
 
@@ -70,3 +79,40 @@ def test_to_json_roundtrip():
     # 空白段落仍會被保留在 json（原始資料），但 text 去除空白
     assert payload["segments"][0]["speaker"] == "SPEAKER_00"
     assert payload["segments"][0]["text"] == "你好"
+
+
+def test_to_vtt_uses_dot_millis_and_voice_tag():
+    vtt = to_vtt(_segments())
+    assert vtt.startswith("WEBVTT\n\n")
+    assert "00:00:00.000 --> 00:00:02.500\n<v SPEAKER_00>你好" in vtt
+
+
+def test_to_md_merges_and_applies_names():
+    md = to_md(_segments(), {"SPEAKER_00": "王小明"})
+    assert "**王小明** `00:00:00 - 00:00:05`" in md
+    assert "**SPEAKER_01**" in md
+
+
+def test_clean_text_strips_ansi_control_and_bidi():
+    dirty = "\x1b[31m紅字\x1b[0m\x07 換\n行\u202e反轉"
+    assert clean_text(dirty) == "紅字 換 行 反轉"
+
+
+def test_renderers_never_emit_escape_sequences():
+    segs = [{"speaker": "SPEAKER_00", "start": 0, "end": 1, "text": "\x1b[2Jhi"}]
+    for fmt, render in RENDERERS.items():
+        assert "\x1b" not in render({"segments": segs}), fmt
+
+
+def test_parse_formats_rejects_unknown_instead_of_skipping():
+    assert parse_formats("TXT, md,txt") == ["txt", "md"]
+    with pytest.raises(InvalidArgumentError) as exc:
+        parse_formats("txt,docx")
+    assert "docx" in str(exc.value)
+    with pytest.raises(InvalidArgumentError):
+        parse_formats("")
+
+
+def test_write_outputs_keeps_dotted_stem(tmp_path):
+    written = write_outputs({"segments": _segments()}, tmp_path / "2024.06.25_meeting", ["txt"])
+    assert written == [tmp_path / "2024.06.25_meeting.txt"]

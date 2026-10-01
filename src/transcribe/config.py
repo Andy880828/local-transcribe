@@ -33,9 +33,7 @@ class Settings(BaseSettings):
 
     # 講者分辨模型（新版 whisperx 預設為 community-1，但需另接受授權；
     # 預設指回多數人已接受的 3.1 以降低摩擦，可用 DIARIZE_MODEL 覆寫）
-    diarize_model: str = Field(
-        default="pyannote/speaker-diarization-3.1", alias="DIARIZE_MODEL"
-    )
+    diarize_model: str = Field(default="pyannote/speaker-diarization-3.1", alias="DIARIZE_MODEL")
 
     # 轉錄設定
     whisper_model: str = Field(default="large-v3", alias="WHISPER_MODEL")
@@ -46,17 +44,13 @@ class Settings(BaseSettings):
 
     # 防幻覺 / 轉錄品質旋鈕（預設值即為抗幻覺設定，針對會議類長音檔調校）
     # 關掉「以前文為條件」可斬斷重複自我延續的幻覺迴圈（Whisper 預設為 True）
-    condition_on_previous_text: bool = Field(
-        default=False, alias="CONDITION_ON_PREVIOUS_TEXT"
-    )
+    condition_on_previous_text: bool = Field(default=False, alias="CONDITION_ON_PREVIOUS_TEXT")
     # 禁止解碼時重複的 n-gram 大小（0=停用）；3 可擋掉循環式重複
     no_repeat_ngram_size: int = Field(default=3, alias="NO_REPEAT_NGRAM_SIZE")
     # 重複懲罰（1.0=無）
     repetition_penalty: float = Field(default=1.1, alias="REPETITION_PENALTY")
     # 壓縮比門檻：超過視為重複/失敗段而丟棄（faster-whisper 預設 2.4）
-    compression_ratio_threshold: float = Field(
-        default=2.4, alias="COMPRESSION_RATIO_THRESHOLD"
-    )
+    compression_ratio_threshold: float = Field(default=2.4, alias="COMPRESSION_RATIO_THRESHOLD")
     # 無語音機率門檻：超過視為靜音而略過（預設 0.6）
     no_speech_threshold: float = Field(default=0.6, alias="NO_SPEECH_THRESHOLD")
 

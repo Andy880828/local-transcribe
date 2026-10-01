@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import Settings
-from .errors import GPUOutOfMemoryError, TranscribeError
+from .errors import GPUOutOfMemoryError, ToolMissingError
 from .gpu import ensure_cuda, free_gpu
 
 
@@ -49,7 +49,7 @@ def transcribe_audio(
     try:
         import whisperx
     except ImportError as exc:  # pragma: no cover - 僅在未安裝時觸發
-        raise TranscribeError(
+        raise ToolMissingError(
             "whisperx is not installed",
             hint="尚未安裝 whisperx，請依 README 用 uv 安裝相依套件。",
         ) from exc
@@ -95,5 +95,6 @@ def transcribe_audio(
             raise GPUOutOfMemoryError(
                 str(exc),
                 hint="GPU 記憶體不足。請改用 --compute-type int8 並調小 --batch-size（如 4），或 --device cpu。",
+                retry_args=["--compute-type", "int8", "--batch-size", "4"],
             ) from exc
         raise
