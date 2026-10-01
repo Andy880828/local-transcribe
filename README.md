@@ -1,140 +1,95 @@
 # local-transcribe
 
-本地語音轉錄 + 講者分辨 CLI 工具。輸入音檔，輸出**已標註講者的逐字稿**（`.txt` / `.srt` / `.json`）。
+本地影音轉錄 + 多人聲辨識 CLI。輸入**影片或錄音**，輸出**有時間序、標註講者的逐字稿**（`.txt` / `.srt` / `.vtt` / `.md` / `.json`）。
 
-轉錄與講者分辨 100% 在本地 GPU 執行，不上傳任何音訊。產出的逐字稿可自行貼到 Claude Code 或網站彙整摘要——本工具不含摘要功能。
-
-## 技術組成
-
-| 環節 | 方案 |
-|------|------|
-| 轉錄 | [WhisperX](https://github.com/m-bain/whisperX)（faster-whisper / CTranslate2 後端，預設 `large-v3`）|
-| 詞級對齊 | wav2vec2（可用 `--no-align` 關閉）|
-| 講者分辨 | pyannote `speaker-diarization-3.1`（gated 模型，需 HF token）|
-| 前處理 | 系統 ffmpeg（轉 16kHz 單聲道）|
-| CLI | Typer |
+- 轉錄與講者分辨 100% 在本地 GPU 執行，不上傳任何音訊。
+- **為 AI agent 設計**：`--json` 輸出單一 JSON envelope、穩定錯誤碼與建議動作、`schema` 自我描述；
+  `.claude/skills/` 內附 6 個 SKILL，Claude Code 可直接調用（轉錄、媒體工具、改名匯出、查詢、批次、會議摘要）。
 
 ## 環境需求
 
-- NVIDIA GPU（建議 ≥ 6GB VRAM；本專案在 RTX 4060 / 8GB 上開發）
-- 系統已安裝 **ffmpeg** 且在 PATH 中
-- **uv**（Python 套件 / 環境管理器）
+- NVIDIA GPU（建議 ≥ 6GB VRAM；開發於 RTX 4060 / 8GB）
+- 系統已安裝 **ffmpeg**（含 ffprobe）且在 PATH 中（`winget install ffmpeg`）
+- **uv**
 
-## 安裝（使用 uv）
+## 安裝
 
 ```bash
 cd local-transcribe
-
-# 1) 建立 Python 3.11 虛擬環境（uv 會自動下載對應 Python）
 uv venv --python 3.11
-# Windows 啟用：
 .venv\Scripts\activate
 
-# 2) 先裝 CUDA 12.1 版 torch（RTX 40 系列適用，自帶 cuDNN）
-uv pip install torch==2.4.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121
-
-# 3) 裝本專案與其餘相依（whisperx 會帶入 faster-whisper / pyannote）
-uv pip install -e .
+# 先裝 CUDA 版 torch（否則會拉到 CPU 版，無法用 GPU）
+uv pip install torch torchaudio --torch-backend=auto
+uv pip install -e ".[dev]"
 ```
-
-> ⚠️ **安裝順序很重要**：一定要先裝 cu121 版 torch，否則 pip 會拉到 CPU 版，無法用 GPU。
 
 ## 設定金鑰（講者分辨必需）
 
-1. 複製 `.env.example` 為 `.env`
-2. 到 <https://huggingface.co/settings/tokens> 申請一組 read token，填入 `HF_TOKEN`
-3. **以同一帳號登入並接受兩個 gated 模型的授權**（否則下載會 401）：
+1. 複製 `.env.example` 為 `.env`，到 <https://huggingface.co/settings/tokens> 申請 read token 填入 `HF_TOKEN`
+2. 以同一帳號接受兩個 gated 模型授權（否則 401）：
    - <https://huggingface.co/pyannote/speaker-diarization-3.1>
    - <https://huggingface.co/pyannote/segmentation-3.0>
 
-> 若你只要轉錄、不需分辨講者，可加 `--no-diarize`，這樣不需要 HF token。
+只轉錄、不分辨講者時加 `--no-diarize`，不需要 token。其餘預設值（模型、語言、抗幻覺參數）見 `.env.example`。
 
 ## 使用
 
 ```bash
-# 中文會議，已知 3 位講者，輸出 txt/srt/json
-transcribe run meeting.m4a --language zh --speakers 3
+# 影片 → 多講者逐字稿（已知 3 人）
+uv run transcribe run meeting.mp4 --speakers 3
 
-# 只轉錄、不分辨講者（不需 HF token）
-transcribe run note.m4a --no-diarize
+# 多音軌影片：先看音軌，再選第 1 條
+uv run transcribe media probe movie.mkv
+uv run transcribe run movie.mkv --audio-track 1 --min-speakers 2 --max-speakers 5
 
-# VRAM 不足時降載
-transcribe run meeting.m4a --compute-type int8 --batch-size 4
+# 整個資料夾批次，跳過已轉好的
+uv run transcribe run ./recordings --skip-existing
 
-# 人數未知，給範圍
-transcribe run panel.wav --min-speakers 2 --max-speakers 5
+# 只抽音軌 / 切片段回聽
+uv run transcribe media extract meeting.mp4 -f mp3
+uv run transcribe media clip meeting.mp4 --start 00:12:30 --end 00:13:10
 
-# 自訂輸出資料夾與格式
-transcribe run a.mp3 -o ./outputs -f txt,srt
+# 逐字稿後處理
+uv run transcribe transcript rename outputs/meeting.json --map SPEAKER_00=王小明
+uv run transcribe transcript export outputs/meeting.json -f vtt,md
+uv run transcribe transcript search outputs/meeting.json "交期" -C 1
+uv run transcribe transcript stats outputs/meeting.json
+
+# 給程式／AI 用：加 --json；查全部指令與錯誤碼
+uv run transcribe --json schema
 ```
 
-結果預設寫到 `outputs/<檔名>.txt`、`.srt`、`.json`。
+結果預設寫到 `outputs/<檔名>.<格式>`。各指令完整旗標：`uv run transcribe <指令> --help`。
 
-### 主要旗標
+### `--json` 輸出
 
-| 旗標 | 說明 |
-|------|------|
-| `--language, -l` | 語言代碼（`zh`）；留空自動偵測 |
-| `--model, -m` | Whisper 模型（`large-v3`）|
-| `--speakers` | 已知確切講者人數 |
-| `--min-speakers` / `--max-speakers` | 講者人數範圍 |
-| `--align / --no-align` | 詞級對齊（中文品質普通，可關）|
-| `--diarize / --no-diarize` | 講者分辨開關 |
-| `--condition-on-previous-text` / `--no-...` | 以前文為解碼條件；預設關閉（抗幻覺）|
-| `--repetition-penalty` | 重複懲罰，預設 1.1 |
-| `--no-repeat-ngram-size` | 禁止重複的 n-gram 大小，預設 3 |
-| `--compute-type` | `float16`（預設）/ `int8` / `float32` |
-| `--batch-size` | 批次大小，VRAM 不足時調小 |
-| `--device` | `cuda` / `cpu` |
-| `--output-dir, -o` | 輸出資料夾 |
-| `--format, -f` | 輸出格式，逗號分隔（`txt,srt,json`）|
-
-## 輸出範例（.txt）
-
-```
-[SPEAKER_00] 00:00:00 - 00:00:05
-你好，今天我們來討論下一季的規劃。
-
-[SPEAKER_01] 00:00:05 - 00:00:12
-好的，我先報告一下目前的進度。
+```json
+{"ok": true,  "command": "run", "data": {"files": [...], "summary": {"ok": 1, "skipped": 0, "error": 0}}}
+{"ok": false, "command": "run", "error": {"code": "GPU_OOM", "message": "...", "hint": "...",
+  "action": "retry_with", "retry_args": ["--compute-type", "int8", "--batch-size", "4"]}}
 ```
 
-## 轉錄品質 / 防幻覺
-
-長段單一語者、背景雜音或靜音時，Whisper 容易產生**重複幻覺**（如 `1,2,3...50,50,50` 或同字連發）。本工具**預設已開啟**一組抗幻覺參數，通常不必手動調：
-
-| 參數 | 預設 | 作用 |
-|------|------|------|
-| `condition_on_previous_text` | `false` | 斬斷「重複自我延續」的迴圈（最關鍵）|
-| `no_repeat_ngram_size` | `3` | 解碼時禁止重複任何 3-gram |
-| `repetition_penalty` | `1.1` | 對重複 token 加懲罰 |
-| `compression_ratio_threshold` | `2.4` | 壓縮比過高（高度重複）的段直接丟棄 |
-| `no_speech_threshold` | `0.6` | 靜音機率高的段略過 |
-
-若仍有幻覺，依序嘗試：
-
-1. **加大抗重複力度**：`--repetition-penalty 1.3 --no-repeat-ngram-size 2`
-2. **前處理去雜音**：先用 UVR（Ultimate Vocal Remover）把背景音/音樂分離，只留人聲再轉錄——對吵雜會議特別有效。
-3. 若發現整體連貫性變差，可改回 `--condition-on-previous-text`（會略增重複風險）。
-
-所有參數也可在 `.env` 設定為預設值（見 `.env.example`）。
-
-## 開發 / 測試
-
-```bash
-uv pip install -e ".[dev]"
-pytest            # 離線單元測試，不需 GPU 或金鑰
-```
-
-測試刻意把 GPU 階段（audio/transcribe/diarize）全部 mock，可在無 GPU 環境跑。
+stdout 只有這一個 JSON，進度在 stderr。`action` 告訴呼叫端下一步：`fix_input`、`fix_environment`、`retry_with`、`none`。
+批次有任一檔失敗時 exit code 為 10（`PARTIAL_FAILURE`），成功的檔案仍會寫出。
 
 ## 疑難排解
 
 | 症狀 | 處置 |
-|------|------|
-| CUDA out of memory | `--compute-type int8 --batch-size 4`，或 `--device cpu` |
-| pyannote 下載 401 / gated | 確認已接受上述兩個模型授權，且 token 屬同一帳號 |
-| 找不到 ffmpeg | 安裝 ffmpeg 並加入 PATH（`winget install ffmpeg`）|
+|---|---|
+| `GPU_OOM` | `--compute-type int8 --batch-size 4`，或 `--device cpu` |
+| `DIARIZATION_FAILED`（401 / gated） | 確認已接受上述兩個模型授權，且 token 屬同一帳號 |
+| `TOOL_MISSING` | 安裝 ffmpeg 並加入 PATH |
+| `CUDA_UNAVAILABLE` | 重裝 CUDA 版 torch（見安裝）；或 `--device cpu` |
+| 下載模型時 `WinError 1314` | Windows 無法建立 symlink：開啟「開發人員模式」或在一般終端機執行 |
+| 重複幻覺（同字連發） | `--repetition-penalty 1.3 --no-repeat-ngram-size 2`；吵雜錄音先用 UVR 去背景音 |
 | 中文講者邊界漂移 | 加 `--no-align` 試試 |
-| cuDNN DLL 錯誤 | 確認用 cu121 版 torch（自帶 cuDNN）；必要時改 `--device cpu` |
+
+## 開發
+
+```bash
+uv run pytest -q          # 離線測試，GPU 階段皆 mock
+uvx ruff check src tests
 ```
+
+開發者與 agent 請先讀 `AGENTS.md`，再從 `docs/PROGRESS.md` 開始。

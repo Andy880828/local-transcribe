@@ -23,3 +23,4 @@ dist/
 
 # 錄音／影片樣本（可能含會議內容，不進版控）
 samples/
+.claude/.docs-sync-state.json
