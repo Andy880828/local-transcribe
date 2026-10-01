@@ -54,6 +54,9 @@ uv pip install -e .                    # 改了 pyproject 的 entry point 或依
   pyproject 因此鎖 `typer>=0.27,<0.28`，升版要重跑 `tests/test_cli.py`。
 - **Windows 上 HF Hub 下載模型可能報 `WinError 1314`（無法建立 symlink）**：在受限沙箱或未開
   開發人員模式時發生，不是程式錯誤。在一般終端機執行，或開啟 Windows 開發人員模式。
+- **在 Windows 用 Python 解析 `--json` 輸出時，管線預設以 cp950 解碼**，中文會被拆出假的 `\` 而報
+  `Invalid \escape`（已踩過兩次，誤以為 CLI 輸出壞掉）。CLI 輸出本身是合法 UTF-8：先存檔再
+  `open(..., encoding="utf-8")` 讀，或設 `PYTHONIOENCODING=utf-8`。
 - **torch 必須裝 CUDA 版**，否則 `CUDA_UNAVAILABLE`。安裝順序見 README。
 - 講者分辨需要 `.env` 的 `HF_TOKEN`，且同帳號要接受 `pyannote/speaker-diarization-3.1` 與
   `pyannote/segmentation-3.0` 授權。`run` 會在轉錄前先檢查 token，避免跑完才失敗。
