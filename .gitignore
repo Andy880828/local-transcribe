@@ -20,3 +20,6 @@ dist/
 
 # 模型快取（whisperx/pyannote 會下載到 HF cache，通常不在專案內）
 .cache/
+
+# 錄音／影片樣本（可能含會議內容，不進版控）
+samples/
